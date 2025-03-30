@@ -1,0 +1,25 @@
+{
+  "name": "pratt-parser",
+  "version": "1.0.0",
+  "main": "pratt-parser.mts",
+  "scripts": {
+    "play": "tsx pratt-parser.mts"
+  },
+  "keywords": [
+    "pratt-parser",
+    "compiler",
+    "ast",
+    "parser"
+  ],
+  "author": "Muhammad Mughees Raza",
+  "license": "ISC",
+  "type": "module",
+  "description": "",
+  "dependencies": {
+    "readline-sync": "^1.4.10"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.14",
+    "@types/readline-sync": "^1.4.8"
+  }
+}
