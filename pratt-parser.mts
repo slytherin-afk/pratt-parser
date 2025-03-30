@@ -1,4 +1,4 @@
-import readline from "readline-sync";
+import readline from "readline";
 
 enum TokenType {
   EOF = "Eof",
@@ -109,6 +109,16 @@ class Binary extends Expression {
   }
 }
 
+class Ternary extends Expression {
+  constructor(
+    readonly condition: Expression,
+    readonly left: Expression,
+    readonly right: Expression,
+  ) {
+    super();
+  }
+}
+
 function getParser(input: string) {
   const scanner = getScanner(input);
   let hadError = false;
@@ -180,9 +190,18 @@ function getParser(input: string) {
     },
     binary: (left: Expression) => {
       const operator = previous;
-      const right = parser.parsePrecedence(Precedence.TERM);
+      const right = parser.parsePrecedence(Precedence.TERM + 1);
 
       return new Binary(operator, left, right);
+    },
+    ternary: (condition: Expression) => {
+      const left = parser.parsePrecedence(Precedence.NONE);
+
+      helpers.consume(TokenType.COLON, "Expected after true condition");
+
+      const right = parser.parsePrecedence(Precedence.NONE);
+
+      return new Ternary(condition, left, right);
     },
     prefixMap: (type: TokenType): (() => Expression) | undefined =>
       ({
@@ -198,6 +217,7 @@ function getParser(input: string) {
         [TokenType.MINUS]: parser.binary,
         [TokenType.STAR]: parser.binary,
         [TokenType.SLASH]: parser.binary,
+        [TokenType.QUESTION]: parser.ternary,
       }[type]),
     getPrecedence: (type: TokenType) => {
       switch (type) {
@@ -225,7 +245,7 @@ function getParser(input: string) {
 
       let prefix = getPrefix();
 
-      while (precedence < parser.getPrecedence(current.type)) {
+      while (precedence <= parser.getPrecedence(current.type)) {
         const getInfinix = parser.infinixMap(current.type);
 
         if (!getInfinix) {
@@ -239,7 +259,7 @@ function getParser(input: string) {
       return prefix;
     },
     expression: () => {
-      const expression = parser.parsePrecedence(0);
+      const expression = parser.parsePrecedence(Precedence.NONE);
       helpers.consume(TokenType.EOF, "Expect end of expression");
       return expression;
     },
@@ -248,9 +268,23 @@ function getParser(input: string) {
   return parser;
 }
 
-function main() {
+function askQuestion(query) {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  return new Promise((resolve) =>
+    rl.question(query, (ans) => {
+      rl.close();
+      resolve(ans);
+    }),
+  );
+}
+
+async function main() {
   for (;;) {
-    const input = readline.question("> ");
+    const input = await askQuestion("> ");
     const parser = getParser(input);
     const result = parser.expression();
 
@@ -258,4 +292,4 @@ function main() {
   }
 }
 
-main();
+await main();
